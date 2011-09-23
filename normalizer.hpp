@@ -24,7 +24,7 @@ public:
   }
 private:
   SampleType getGain() const {
-    static const SampleType gain = 0.000625f;
+    static const SampleType gain = 0.0000625f;
     return gain;
   }
   SampleType top;

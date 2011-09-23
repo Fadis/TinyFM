@@ -9,65 +9,65 @@ AnalogOut audio_out(p18);
 
 class AudioBuffer {
 public:
-  void set( SampleType _value ) {
-      normalizer.set( _value );
-      SampleType value = normalizer.get();
-      buffer[ write_head ] = value * 1 / 4 + prev * 3 / 4;
-      buffer[ write_head ] = ( buffer[ write_head ] + 1 ) / 2;
-      ++write_head;
-      write_head &= 0x3F;
-      buffer[ write_head ] = value * 2 / 4 + prev * 2 / 4;
-      buffer[ write_head ] = ( buffer[ write_head ] + 1 ) / 2;
-      ++write_head;
-      write_head &= 0x3F;
-      buffer[ write_head ] = value * 3 / 4 + prev * 1 / 4;
-      buffer[ write_head ] = ( buffer[ write_head ] + 1 ) / 2;
-      ++write_head;
-      write_head &= 0x3F;
-      buffer[ write_head ] = value;
-      buffer[ write_head ] = ( buffer[ write_head ] + 1 ) / 2;
-      ++write_head;
-      write_head &= 0x3F;
-      prev = value;
+  inline void set( SampleType _value ) {
+    normalizer.set( _value );
+    SampleType value = normalizer.get();
+    buffer[ write_head ] = value * 1 / 4 + write_prev * 3 / 4;
+    buffer[ write_head ] = ( buffer[ write_head ] + 1 ) / 2;
+    ++write_head;
+    write_head &= 0x3F;
+    buffer[ write_head ] = value * 2 / 4 + write_prev * 2 / 4;
+    buffer[ write_head ] = ( buffer[ write_head ] + 1 ) / 2;
+    ++write_head;
+    write_head &= 0x3F;
+    buffer[ write_head ] = value * 3 / 4 + write_prev * 1 / 4;
+    buffer[ write_head ] = ( buffer[ write_head ] + 1 ) / 2;
+    ++write_head;
+    write_head &= 0x3F;
+    buffer[ write_head ] = value;
+    buffer[ write_head ] = ( buffer[ write_head ] + 1 ) / 2;
+    ++write_head;
+    write_head &= 0x3F;
+    write_prev = value;
   }
-  SampleType get() {
+  inline SampleType get() {
     if( size() ) {
       SampleType value = buffer[ read_head ];
       ++read_head;
       read_head &= 0x3F;
+      read_prev = value;
       return value;
     }
     else {
-      SampleType value = buffer[ read_head ];
-      return 0;
+      return read_prev;
     }
   }
-  unsigned int size() const {
+  inline unsigned int size() const {
     if( write_head >= read_head )
       return write_head - read_head;
     else
       return 64 - ( read_head - write_head );
   }
-  bool readyToSet() const {
+  inline bool readyToSet() const {
     return size() <= 60;
   }
-  static AudioBuffer &getInstance() {
+  inline static AudioBuffer &getInstance() {
     static AudioBuffer buffer;
     return buffer;
   }
 private:
-  AudioBuffer() : read_head( 0 ), write_head( 0 ), prev( 0 ) {
-    audio_stream.attach( &AudioBuffer::audioOutput, 1.0f/(freq*4.0f) );
+  AudioBuffer() : read_head( 0 ), write_head( 0 ), write_prev( 0 ), read_prev( 0 ) {
+    audio_stream.attach_us( &AudioBuffer::audioOutput, 1000000/(freq*4) );
   }
   static void audioOutput() {
-    SampleType value = AudioBuffer::getInstance().get();
-    audio_out.write_u16( value.get() );
+    audio_out.write_u16( AudioBuffer::getInstance().get().get() );
   }
   Ticker audio_stream;
   unsigned int read_head;
   unsigned int write_head;
   SampleType buffer[ 64 ];
-  SampleType prev;
+  SampleType write_prev;
+  SampleType read_prev;
   Normalize normalizer;
 };
 

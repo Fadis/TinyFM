@@ -4,23 +4,24 @@
 #include "fixed.hpp"
 #include "sin_table.hpp"
 #include "exp2_table.hpp"
+#include "fuzz_table.hpp"
 
 template< unsigned int _pos >
-fixed32<_pos> sint( fixed32<_pos> _x ) {
+inline fixed32<_pos> sint( fixed32<_pos> _x ) {
   fixed32<_pos> temp;
   temp.set( sin_table[ static_cast<int>( _x << 10 ) & 0x3FF ] << ( _pos - 16 ) );
   return temp;
 }
 
 template< unsigned int _pos >
-fixed32<_pos> cost( fixed32<_pos> _x ) {
+inline fixed32<_pos> cost( fixed32<_pos> _x ) {
   fixed32<_pos> temp;
   temp.set( sin_table[ static_cast<int>( ( _x << 10 ) + 512 ) & 0x3FF ] << ( _pos - 16 ) );
   return temp;
 }
 
 template< unsigned int _pos >
-fixed32<_pos> exp2t( fixed32<_pos> _x ) {
+inline fixed32<_pos> exp2t( fixed32<_pos> _x ) {
   int scale_factor = _x;
   const unsigned int elem = ( _x - scale_factor ) << 7;
   fixed32<_pos> temp;
@@ -30,12 +31,13 @@ fixed32<_pos> exp2t( fixed32<_pos> _x ) {
 }
 
 template<unsigned int _pos>
-fixed32<_pos> noteToFrequency( fixed32<_pos> _note ) {
-  return 13.75f * exp2t( ( _note - 9 ) / 12 );
+inline fixed32<_pos> noteToFrequency( fixed32<_pos> _note ) {
+  static const fixed32<_pos> scale = 13.75f;
+  return scale * exp2t( ( _note - 9 ) / 12 );
 }
 
 template<unsigned int _pos>
-fixed32<_pos> triangle( fixed32<_pos> _x ) {
+inline fixed32<_pos> triangle( fixed32<_pos> _x ) {
   fixed32<_pos> quad = _x * 4;
   if( quad < 1 )
     return quad;
@@ -44,4 +46,26 @@ fixed32<_pos> triangle( fixed32<_pos> _x ) {
   else
     return -4 + quad;
 }
+
+template<unsigned int _pos>
+inline fixed32<_pos> fuzz( fixed32<_pos> _x ) {
+  if( _x < -2 )
+    return -1;
+  else if( _x < 0 ) {
+    fixed32<_pos> temp;
+    const unsigned int elem =  -_x << 8;
+    temp.set( fuzz_table[ elem ] << ( _pos - 15 ) );
+    temp = -temp;
+    return temp;
+  }
+  else if( _x < 2 ) {
+    fixed32<_pos> temp;
+    const unsigned int elem =  _x << 8;
+    temp.set( fuzz_table[ elem ] << ( _pos - 15 ) );
+    return temp;
+  }
+  else
+    return 1;
+}
+
 #endif

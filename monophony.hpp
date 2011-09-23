@@ -9,7 +9,7 @@ template< typename Module >
 class Monophony {
 public:
   Monophony() : tick( 1.0f/freq ) {}
-  SampleType operator()() {
+  inline SampleType operator()() {
     if( getStatus() == Note::NOTE_ON ) {
       SampleType result = module( clock, note );
       clock += tick;
@@ -28,31 +28,30 @@ public:
       return 0;
     }
   }
-  int noteOn( int _note_number, SampleType _pressure ) {
+  inline int noteOn( int _note_number, SampleType _pressure ) {
     clock.noteOn();
     note.noteOn( _note_number, _pressure );
     return 0;
   }
-  void noteOff( int _dummy = 0 ) {
+  inline void noteOff( int _dummy = 0 ) {
     clock.noteOff();
     note.noteOff();
   }
-  void noteWait( int _dummy = 0 ) {
+  inline void noteWait( int _dummy = 0 ) {
     note.noteWait();
   }
-  void pitchBend( SampleType _pitch ) {
+  inline void pitchBend( SampleType _pitch ) {
     note.pitchBend( _pitch );
   }
-  void reset() {
+  inline void reset() {
     clock.reset();
   }
-  Note::KeyState getStatus() const {
+  inline Note::KeyState getStatus() const {
     return note.getStatus();
   }
-  TimeType getGlobalTime() const {
+  inline TimeType getGlobalTime() const {
     return clock.getGlobal();
   }
-  
 private:
   Clock clock;
   Note note;

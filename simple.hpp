@@ -115,7 +115,7 @@ template< typename Instrument >
 class SimpleReader {
 public:
   SimpleReader ( const Score *_score ) : score ( _score ), current_score ( _score ), is_end ( false ), prev_score_time( 0 ) {}
-  void read() {
+  inline void read() {
     TimeType time = inst.getGlobalTime();
     while ( !release_stack.empty() && time >= release_stack.getReleaseTime() ) {
       inst.noteOff ( release_stack.getNoteID() );
@@ -135,7 +135,7 @@ public:
       ++current_score;
     }
   }
-  SampleType operator()() {
+  inline SampleType operator()() {
     return inst();
   }
   inline bool isEnd() const {
@@ -149,109 +149,112 @@ private:
   bool is_end;
   TimeType prev_score_time;
 };
-#if 0
-      /*!
-       * 複数のSimpleReaderを束ねて2つ以上の楽器を同時に演奏します。
-       */
-    template< typename OutputType, typename ReaderType, typename BufferType, unsigned int track_count >
-    class Tracks {
-      public:
-      /*!
-       * コンストラクタ
-       * \param _sink オーディオデータの出力先
-       */
-        Tracks ( const char *_sink ) : output ( _sink ) {}
-        void setScore ( unsigned int _target, const char *_prog, const harps::input::Score *_score ) {
-          readers[ _target ].reset ( new ReaderType ( _score ) );
-          readers[ _target ]->programChange ( _prog );
-          buffers[ _target ].reset ( new BufferType );
-        }
-      /*!
-       * 楽譜を読んでオーディオデータを生成し、指定された出力先に出力します。
-       */
-        void operator() () {
-          tbb::parallel_for ( tbb::blocked_range< unsigned int > ( 0, track_count, 1 ),
-                         TrackRunner ( readers, buffers ) );
-          BufferType sum;
-          Buffer< float >::SampleType *sum_raw = sum.get();
-          unsigned int sample_index;
-          for ( sample_index = 0; sample_index != SAMPLE_COUNT; sample_index++ )
-            sum_raw[ sample_index ] = 0.0;
-          unsigned int track_index;
-          for ( track_index = 0; track_index != track_count; track_index++ ) {
-            if ( buffers[ track_index ] ) {
-              Buffer< float >::SampleType *buffer_raw = buffers[ track_index ]->get();
-              for ( sample_index = 0; sample_index != SAMPLE_COUNT; sample_index++ )
-                sum_raw[ sample_index ] += buffer_raw[ sample_index ];
-            }
-          }
-          BufferType nlevel;
-          Buffer< float >::SampleType *nlevel_raw = nlevel.get();
-          for ( sample_index = 0; sample_index != SAMPLE_COUNT; sample_index++ ) {
-            normalizer.setValue ( sum_raw[ sample_index ] );
-            nlevel_raw[ sample_index ] = normalizer.getAmp();
-          }
-          reduceNormalizingNoize ( nlevel );
-          for ( sample_index = 0; sample_index != SAMPLE_COUNT; sample_index++ )
-            sum_raw[ sample_index ] /= nlevel_raw[ sample_index ];
-          output ( sum/*, SAMPLE_COUNT*/ );
-        }
-      /*!
-       * 楽譜が終端に達しているかどうかを調べます
-       * \return 終端ならtrue そうでなければfalse
-       */
-        bool isEnd() {
-          unsigned int track_index;
-          for ( track_index = 0; track_index != track_count; track_index++ )
-            if ( readers[ track_index ] )
-              return readers[ track_index ]->isEnd();
-        }
-      private:
-        class TrackRunner {
-          public:
-            TrackRunner ( boost::array< boost::shared_ptr< ReaderType >, track_count > &_readers,
-                          boost::array< boost::shared_ptr< BufferType >, track_count > &_buffers )
-                : readers ( _readers ), buffers ( _buffers ) {}
-            void operator() ( const tbb::blocked_range<unsigned int> &_r ) const {
-              unsigned int index;
-              for ( index = _r.begin(); index != _r.end(); index++ ) {
-                if ( readers[ index ] )
-                  ( *readers[ index ] ) ( *buffers[ index ] );
-              }
-            }
-          private:
-            boost::array< boost::shared_ptr< ReaderType >, track_count > &readers;
-            boost::array< boost::shared_ptr< BufferType >, track_count > &buffers;
-        };
-        OutputType output;
-        harps::Normalizer< SAMPLING_RATE * 10 > normalizer;
-        boost::array< boost::shared_ptr< ReaderType >, track_count > readers;
-        boost::array< boost::shared_ptr< BufferType >, track_count > buffers;
-    };
-  }
-}
-#endif
 
 const float tempo = 150.0f;
 
 const Score score0[] = {
   { 0, N8, E_4, 1.0f },
   { N8, N8, G_3, 1.0f },
+  { 0, N8, C_2, 1.0f },
   { N8, N8, F_3, 1.0f },
   { N8, N8, D_4, 1.0f },
+  { 0, N8, C_2, 1.0f },
   { N8, N8, E_4, 1.0f },
   { N8, N8, G_3, 1.0f },
+  { 0, N8, C_2, 1.0f },
   { N8, N8, F_3, 1.0f },
   { N8, N16, FS4, 1.0f },
+  { 0, N8, C_2, 1.0f },
   { N16, N16+N8, G_4, 1.0f },
   { N16+N8, N8, B_3, 1.0f },
+  { 0, N8, C_2, 1.0f },
   { N8, N8, FS4, 1.0f },
   { N8, N8, A_3, 1.0f },
+  { 0, N8, C_2, 1.0f },
   { N8, N8, E_4, 1.0f },
   { N8, N8, G_3, 1.0f },
+  { 0, N8, C_2, 1.0f },
   { N8, N8, FS3, 1.0f },
   { N8, N8, D_4, 1.0f },
-  { N8, END, 0, 0.0f },
+  { 0, N8, D_2, 1.0f },
+
+  { N8, N8, E_4, 1.0f },
+  { N8, N8, G_3, 1.0f },
+  { 0, N8, E_2, 1.0f },
+  { N8, N8, F_3, 1.0f },
+  { N8, N8, D_4, 1.0f },
+  { 0, N8, E_2, 1.0f },
+  { N8, N8, E_4, 1.0f },
+  { N8, N8, G_3, 1.0f },
+  { 0, N8, E_2, 1.0f },
+  { N8, N8, F_3, 1.0f },
+  { N8, N16, FS4, 1.0f },
+  { 0, N8, E_2, 1.0f },
+  { N16, N16+N8, G_4, 1.0f },
+  { N16+N8, N8, B_3, 1.0f },
+  { 0, N8, E_2, 1.0f },
+  { N8, N8, A_4, 1.0f },
+  { N8, N8, FS4, 1.0f },
+  { 0, N8, E_2, 1.0f },
+  { N8, N8, G_4, 1.0f },
+  { N8, N8, E_3, 1.0f },
+  { 0, N8, E_2, 1.0f },
+  { N8, N8, FS3, 1.0f },
+  { N8, N8, D_4, 1.0f },
+  { 0, N8, D_2, 1.0f },
+
+  { N8, N8, E_4, 1.0f },
+  { N8, N8, G_3, 1.0f },
+  { 0, N8, C_2, 1.0f },
+  { N8, N8, F_3, 1.0f },
+  { N8, N8, D_4, 1.0f },
+  { 0, N8, C_2, 1.0f },
+  { N8, N8, E_4, 1.0f },
+  { N8, N8, G_3, 1.0f },
+  { 0, N8, C_2, 1.0f },
+  { N8, N8, F_3, 1.0f },
+  { N8, N16, FS4, 1.0f },
+  { 0, N8, C_2, 1.0f },
+  { N16, N16+N8, G_4, 1.0f },
+  { N16+N8, N8, B_3, 1.0f },
+  { 0, N8, D_2, 1.0f },
+  { N8, N8, FS4, 1.0f },
+  { N8, N8, A_3, 1.0f },
+  { 0, N8, D_2, 1.0f },
+  { N8, N8, E_4, 1.0f },
+  { N8, N8, G_3, 1.0f },
+  { 0, N8, D_2, 1.0f },
+  { N8, N8, FS3, 1.0f },
+  { N8, N8, D_4, 1.0f },
+  { 0, N8, D_2, 1.0f },
+
+  { N8, N8, E_4, 1.0f },
+  { N8, N8, G_3, 1.0f },
+  { 0, N8, E_2, 1.0f },
+  { N8, N8, F_3, 1.0f },
+  { N8, N8, D_4, 1.0f },
+  { 0, N8, E_2, 1.0f },
+  { N8, N8, E_4, 1.0f },
+  { N8, N8, G_3, 1.0f },
+  { 0, N8, E_2, 1.0f },
+  { N8, N8, F_3, 1.0f },
+  { N8, N16, FS4, 1.0f },
+  { 0, N8, E_2, 1.0f },
+  { N16, N16+N8, G_4, 1.0f },
+  { N16+N8, N8, B_3, 1.0f },
+  { 0, N8, E_2, 1.0f },
+  { N8, N8, A_4, 1.0f },
+  { N8, N8, FS4, 1.0f },
+  { 0, N8, E_2, 1.0f },
+  { N8, N8, G_4, 1.0f },
+  { N8, N8, E_3, 1.0f },
+  { 0, N8, E_2, 1.0f },
+  { N8, N8, FS3, 1.0f },
+  { N8, N8, D_4, 1.0f },
+  { 0, N8, E_2, 1.0f },
+
+
+  { N1, END, 0, 1.0f },
 };
 
 #endif

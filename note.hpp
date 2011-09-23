@@ -1,6 +1,7 @@
 #ifndef TINYFM_NOTE_HPP
 #define TINYFM_NOTE_HPP
 
+#include "fixed_math.hpp"
 #include "config.hpp"
 
 class Note {
@@ -11,41 +12,41 @@ public:
     NOTE_WAIT
   };
   Note() : status( NOTE_WAIT ) {}
-  void noteOn( unsigned int _number, SampleType _pressure ) {
+  inline void noteOn( unsigned int _number, SampleType _pressure ) {
     status = NOTE_ON;
     number = _number;
     frequency = noteToFrequency( static_cast< SampleType >( number ) );
     pressure = _pressure;
   }
-  void noteOff() {
+  inline void noteOff() {
     status = NOTE_OFF;
   }
-  void noteWait() {
+  inline void noteWait() {
     status = NOTE_WAIT;
   }
-  TimeType getFrequency() const {
+  inline TimeType getFrequency() const {
     return frequency;
   }
-  unsigned int getNumber() const {
+  inline unsigned int getNumber() const {
     return number;
   }
-  KeyState getStatus() const {
+  inline KeyState getStatus() const {
     return status;
   }
-  void endRequest() {
+  inline void endRequest() {
     ++end_request;
   }
-  void contRequest() {
+  inline void contRequest() {
     ++cont_request;
   }
-  void resetVote() {
+  inline void resetVote() {
     end_request = 0;
     cont_request = 0;
   }
-  bool isEnd() const {
+  inline bool isEnd() const {
     return cont_request == 0;
   }
-  void pitchBend( SampleType _pitch ) {
+  inline void pitchBend( SampleType _pitch ) {
     frequency = noteToFrequency( static_cast< SampleType >( number ) + _pitch );
   }
 private:
